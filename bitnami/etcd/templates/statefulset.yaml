@@ -82,13 +82,13 @@ spec:
             }
 
             ## Create data dir if not exists
-            if [ ! -d '${DATA_DIR}' ]; then
+            if [ ! -d '{{ template "etcd.dataDir" . }}' ]; then
               echo "==> Creating data dir..."
               mkdir -p ${DATA_DIR}
             fi
 
             ## Re-joining failed node
-            if [ -d '${DATA_DIR}/member/' ]; then
+            if [ -d '${{ template "etcd.dataDir" . }}/member/' ]; then
               echo "==> Data exists. Re-joining etcd member"
               member_id=$(cat ${DATA_DIR}/member_id)
 
@@ -160,11 +160,11 @@ spec:
         - name: ETCD_DATA_DIR
           value: {{ template "etcd.dataDir" . }}
         - name: ETCD_ADVERTISE_CLIENT_URLS
-          value: "{{ $etcdClientProtocol }}://$(MY_POD_NAME):{{ .Values.service.port }}"
+          value: "{{ $etcdClientProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}"
         - name: ETCD_LISTEN_CLIENT_URLS
           value: "{{ $etcdClientProtocol }}://0.0.0.0:{{ .Values.service.port }}"
         - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
-          value: "{{ $etcdPeerProtocol }}://$(MY_POD_NAME):{{ .Values.service.peerPort }}"
+          value: "{{ $etcdPeerProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.peerPort }}"
         - name: ETCD_LISTEN_PEER_URLS
           value: "{{ $etcdPeerProtocol }}://0.0.0.0:{{ .Values.service.peerPort }}"
 
@@ -175,7 +175,7 @@ spec:
         - name: ETCD_INITIAL_CLUSTER_STATE
           value: "new"
         - name: ETCD_INITIAL_CLUSTER
-          value: {{range $i, $e := until $replicaCount }}{{ $etcdFullname }}-{{ $e }}={{ $etcdPeerProtocol }}://{{ $etcdFullname }}-{{ $e }}.{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ $peerPort }},{{ end }}
+          value: "{{range $i, $e := until $replicaCount }}{{ $etcdFullname }}-{{ $e }}={{ $etcdPeerProtocol }}://{{ $etcdFullname }}-{{ $e }}.{{ $etcdHeadlessServiceName }}.default.svc.cluster.local:{{ $peerPort }},{{ end }}"
         {{- end }}
 
         ## RBAC authentication
@@ -334,5 +334,3 @@ spec:
       - name: data
         emptyDir: {}
 {{- end }}
-
-
