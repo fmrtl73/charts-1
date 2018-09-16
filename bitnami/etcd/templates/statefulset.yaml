@@ -88,7 +88,7 @@ spec:
             fi
 
             ## Re-joining failed node
-            if [ -d '${{ template "etcd.dataDir" . }}/member/' ]; then
+            if [ -d '{{ template "etcd.dataDir" . }}/member/' ]; then
               echo "==> Data exists. Re-joining etcd member"
               member_id=$(cat ${DATA_DIR}/member_id)
 
