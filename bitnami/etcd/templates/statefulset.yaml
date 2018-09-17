@@ -93,9 +93,11 @@ spec:
               member_id=$(cat ${DATA_DIR}/member_id)
 
               echo "==> Updating member in existing cluster."
-              export ETCDCTL_ENDPOINTS="{{ $etcdClientProtocol }}://{{ $etcdFullname }}-0.{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ $clientPort }}"
+              export SVC_PORT={{ .Values.service.port }}
+              export ETCDCTL_ENDPOINTS="{{range $i, $e := until $replicaCount }}{{ $etcdPeerProtocol }}://{{ $etcdFullname }}-{{ $e }}.{{ $etcdHeadlessServiceName }}.default.svc.cluster.local:${SVC_PORT},{{ end }}"
+              echo "WTF"
               etcdctl ${AUTH_OPTIONS} member update ${member_id} {{ $etcdPeerProtocol }}://`hostname -s`.{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ $peerPort }}
-
+              echo "========== did the thing"
             ## Adding new member to the cluster
             elif [ "${ID}" -ge {{ $replicaCount }} ]; then
               echo "==> Adding member to existing cluster."
@@ -234,22 +236,6 @@ spec:
           containerPort: {{ .Values.service.port }}
         - name: peer
           containerPort: {{ .Values.service.port }}
-        lifecycle:
-          preStop:
-            exec:
-              command:
-                - "/bin/sh"
-                - "-ec"
-                - |
-                  AUTH_OPTIONS="{{ template "etcd.authOptions" . }}"
-                  DATA_DIR={{ template "etcd.dataDir" . }}
-                  MEMBER_ID=$(etcdctl member list | grep name=`hostname -s` | awk {'print $1'} | awk -F ":" {'print $1'})
-                  export ETCDCTL_ENDPOINTS="{{ $etcdClientProtocol }}://{{ $etcdFullname }}-0.{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ $clientPort }}"
-                  echo "==> Removing $MEMBER_ID from etcd cluster"
-                  etcdctl ${AUTH_OPTIONS} member remove $MEMBER_ID
-                  if [ $? -eq 0 ]; then
-                      rm -rf ${DATA_DIR}/*
-                  fi
         {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
           tcpSocket:
