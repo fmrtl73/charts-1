@@ -95,9 +95,7 @@ spec:
               echo "==> Updating member in existing cluster."
               export SVC_PORT={{ .Values.service.port }}
               export ETCDCTL_ENDPOINTS="{{range $i, $e := until $replicaCount }}{{ $etcdPeerProtocol }}://{{ $etcdFullname }}-{{ $e }}.{{ $etcdHeadlessServiceName }}.default.svc.cluster.local:${SVC_PORT},{{ end }}"
-              echo "WTF"
               etcdctl ${AUTH_OPTIONS} member update ${member_id} {{ $etcdPeerProtocol }}://`hostname -s`.{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ $peerPort }}
-              echo "========== did the thing"
             ## Adding new member to the cluster
             elif [ "${ID}" -ge {{ $replicaCount }} ]; then
               echo "==> Adding member to existing cluster."
