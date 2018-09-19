@@ -22,6 +22,8 @@ image:
   ## It turns BASH and NAMI debugging in minideb
   ## ref:  https://github.com/bitnami/minideb-extras/#turn-on-bash-debugging
   debug: false
+  
+schedulerName: "stork"
 
 statefulset:
   ## Update strategy, can be set to RollingUpdate or OnDelete by default.
