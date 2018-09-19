@@ -70,6 +70,7 @@ spec:
             HOSTNAME=$(hostname -s)
             ID=${HOSTNAME:(-1)}
             echo "==> The ID of the host is $ID"
+            echo "==> The replicaCount is currently $replicaCount"
             DATA_DIR={{ template "etcd.dataDir" . }}
 
             AUTH_OPTIONS="{{ template "etcd.authOptions" . }}"
@@ -95,7 +96,6 @@ spec:
               echo "==> Updating member in existing cluster."
               export SVC_PORT={{ .Values.service.port }}
               export ETCDCTL_ENDPOINTS="{{range $i, $e := until $replicaCount }}{{ $etcdPeerProtocol }}://{{ $etcdFullname }}-{{ $e }}.{{ $etcdHeadlessServiceName }}.default.svc.cluster.local:${SVC_PORT},{{ end }}"
-              etcdctl ${AUTH_OPTIONS} member update ${member_id} {{ $etcdPeerProtocol }}://`hostname -s`.{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ $peerPort }}
             ## Adding new member to the cluster
             elif [ "${ID}" -ge {{ $replicaCount }} ]; then
               echo "==> Adding member to existing cluster."
@@ -128,7 +128,6 @@ spec:
                 sleep 5
               fi
             fi
-
             {{- if .Values.useConfigmap }}
             exec /opt/bitnami/etcd/bin/etcd --config-file /opt/bitnami/etcd/conf/etcd.conf.yml
             {{ else }}
